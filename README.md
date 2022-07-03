@@ -30,7 +30,7 @@ to visualize the process of recovering data from an arbitrary learner network. F
 To generate recovered samples :
 `python run_MRP.py --dataset=[mnist, cifar10] --t_train=False --num_sample=4000 --batch_size=200 `
 
-Recovered data for CIFAR-10 dataset is available [here](https://drive.google.com/drive/folders/1AR_tWxt36m9rm0SDHFIJ4LCjas9O3s-I?usp=sharing
+Recovered data for CIFAR-10 dataset and pretrained models are available [here](https://drive.google.com/drive/folders/1AR_tWxt36m9rm0SDHFIJ4LCjas9O3s-I?usp=sharing
 ).
 
 

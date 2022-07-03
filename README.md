@@ -35,17 +35,7 @@ Recovered data for CIFAR-10 dataset and pretrained models are available [here](h
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+## Citing
 ```BibTeX
 @inproceedings{pourkeshavarzi2021looking,
   title={Looking Back on Learned Experiences For Class/task Incremental Learning},

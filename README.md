@@ -1,5 +1,5 @@
 # Cost-Free-Incremental-Learning
-This is the code for [Cost-Free-Incremental-Learning](https://openreview.net/forum?id=RxplU3vmBx) which is accepted on ICLR 2022 Spotlight paper.
+This is the code for [Cost-Free-Incremental-Learning](https://openreview.net/forum?id=RxplU3vmBx) which is accepted on **ICLR 2022 Spotlight** paper.
 ## Abstract
 Existing methods in IL tackle catastrophic forgetting by either storing old data samples or only updating a
 parameter set of deep neural networks, which, however, demands a large memory

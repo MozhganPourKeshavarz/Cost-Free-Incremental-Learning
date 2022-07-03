@@ -79,8 +79,6 @@ class Buffer:
 
         for i in range(examples.shape[0]):
             index = reservoir(self.num_seen_examples, self.buffer_size)
-            print(index)
-            exit()
             self.num_seen_examples += 1
             if index >= 0:
                 self.examples[index] = examples[i].to(self.device)

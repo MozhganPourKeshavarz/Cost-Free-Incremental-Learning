@@ -1,8 +1,3 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 import torch
 from utils.status import progress_bar, create_stash
 from utils.tb_logger import *
@@ -14,67 +9,43 @@ from datasets.utils.continual_dataset import ContinualDataset
 from typing import Tuple
 from datasets import get_dataset
 import sys
-from PIL import Image
 import scipy.io as sio
-import cv2, os
+import cv2
 
-def data_impression_Lenet5(model: ContinualModel,finished_calss):
-    # %% Visualize generated DI samples
+def recovered_sample_Lenet5(model: ContinualModel,finished_calss):
+
     data_result = []
     count = 0
-    home_path = "/Users/mozhgan/Documents/PycharmProjects/CL_DER"
-    data = sio.loadmat(home_path + '/data/data_imp/Orginal__DI-1.mat')
+    data = sio.loadmat('/data/simple_MRP/Orginal__DI-1.mat')
     for i, l in zip(data['train_images'], data['train_labels']):
         first, second = sorted(np.vstack([np.arange(10), l]).T, key=lambda l: l[1], reverse=True)[:2]
 
         if int(first[0]) in finished_calss:
             data_result.append([int(first[0]), first[1], i])
-
-            try:
-              os.mkdir(home_path+"/data/data_imp/"+str(first[0]))
-            except:
-                pass
-                # print("already exists")
-
-            image = np.pad(cv2.resize(i, (200, 200)).astype(np.uint8), [[24, 0], [0, 0]], 'constant')
-            cv2.putText(image, '\'%d\':%.2f, \'%d\':%.2f' % (first[0], first[1], second[0], second[1]),
-                        (0, 24), cv2.FONT_HERSHEY_SIMPLEX, .75, (255, 255, 255), 1, cv2.LINE_AA)
-
-            cv2.imwrite(home_path +"/data/data_imp/" + str(first[0]) + "/"+ str(count) +".jpg", image)
             count += 1
 
     data_result.sort(key=lambda x: x[1])
-    data_impressions = data_result[-50:]
+    recovered_samples = data_result[-50:]
 
-    print(data_impressions[0][2].shape)
+    print(recovered_samples[0][2].shape)
 
-    data_impressions = np.expand_dims(np.array([cv2.resize(ti[2], (28, 28)) for ti in data_impressions]), -1)
-    print(data_impressions.shape)
-    # exit()
-    data_impressions = [di.transpose([2, 0, 1]) for di in data_impressions]
-    data_impressions  = np.asarray(data_impressions)
-    data_impressions = torch.from_numpy(data_impressions)
+    recovered_samples = np.expand_dims(np.array([cv2.resize(ti[2], (28, 28)) for ti in recovered_samples]), -1)
 
-    print(type(data_impressions))
-    print(data_impressions.shape)
-    exit()
+    recovered_samples = [di.transpose([2, 0, 1]) for di in recovered_samples]
+    recovered_samples  = np.asarray(recovered_samples)
+    recovered_samples = torch.from_numpy(recovered_samples)
 
-    # print("")
-    # print("Data Impression ... ")
     status = model.net.training
     model.net.eval()
 
-    data_impressions_logits = model(data_impressions)
+    recovered_samples_logits = model(recovered_samples)
 
     model.net.train(status)
-    return data_impressions, data_impressions_logits
+    return recovered_samples, recovered_samples_logits
 
-def data_impression_CIFAR10(model: ContinualModel,finished_calss):
+def recovered_sample_CIFAR10(model: ContinualModel,finished_calss):
     # %% Visualize generated DI samples
     data_result = []
-    count = 0
-    home_path = "/Users/mozhgan/Documents/PycharmProjects/CL_DER"
-
 
     labels = np.load('ySoft_T20_40000_lr_0.001_batch100_1500_iterations.npy')
     images = np.load('X_T20_40000_lr_0.001_batch100_1500_iterations.npy')
@@ -82,29 +53,15 @@ def data_impression_CIFAR10(model: ContinualModel,finished_calss):
 
     for i, l in zip(images, labels):
         first, second = sorted(np.vstack([np.arange(10), l]).T, key=lambda l: l[1], reverse=True)[:2]
-        # print(i.shape)
-        # exit()
+
         if int(first[0]) in finished_calss:
             data_result.append([int(first[0]), first[1], i])
-            #
-            # try:
-            #   os.mkdir(home_path+"/data/data_imp/cifar10/"+str(first[0]))
-            # except:
-            #     pass
-            #     # print("already exists")
-            #
-            # image = np.pad(cv2.resize(i, (100, 100)).astype(np.uint8), [[24, 0], [0, 0]], 'constant')
-            # cv2.putText(image, '\'%d\':%.2f, \'%d\':%.2f' % (first[0], first[1], second[0], second[1]),
-            #             (0, 24), cv2.FONT_HERSHEY_SIMPLEX, .75, (255, 255, 255), 1, cv2.LINE_AA)
-            #
-            # cv2.imwrite(home_path +"/data/data_imp/cifar10/" + str(first[0]) + "/"+ str(count) +".jpg", image)
-            # count += 1
 
     top_n = 500
     n = 50  # step size
 
     data_result.sort(key=lambda x: x[1])
-    data_impressions = data_result[-top_n:]
+    recovered_samples = data_result[-top_n:]
 
     status = model.net.training
     model.net.eval()
@@ -115,74 +72,26 @@ def data_impression_CIFAR10(model: ContinualModel,finished_calss):
     for i in range(0, top_n + 1 - n, n):
         print(i, i + n - 1)
 
-        batched_data_impressions = data_impressions[i, i + n - 1]
-        batched_data_impressions = np.array([cv2.resize(ti[2], (32, 32)) for ti in batched_data_impressions])
-        batched_data_impressions = [di.transpose([2, 0, 1]) for di in batched_data_impressions]
-        batched_data_impressions  = np.asarray(batched_data_impressions)
-        batched_data_impressions = torch.from_numpy(batched_data_impressions)
+        batched_recovered_samples = recovered_samples[i, i + n - 1]
+        batched_recovered_samples = np.array([cv2.resize(ti[2], (32, 32)) for ti in batched_recovered_samples])
+        batched_recovered_samples = [di.transpose([2, 0, 1]) for di in batched_recovered_samples]
+        batched_recovered_samples  = np.asarray(batched_recovered_samples)
+        batched_recovered_samples = torch.from_numpy(batched_recovered_samples)
 
-        batched_data_impressions_logits = model(batched_data_impressions)
+        batched_recovered_samples_logits = model(batched_recovered_samples)
 
-        dis.append(batched_data_impressions)
-        dis_logits.append(batched_data_impressions_logits)
+        dis.append(batched_recovered_samples)
+        dis_logits.append(batched_recovered_samples_logits)
 
 
     return dis, dis_logits
 
-    # data_result.sort(key=lambda x: x[1])
-    # data_impressions = data_result[-50:]
-    #
-    # # print(data_impressions[0][2].shape)
-    #
-    # data_impressions = np.array([cv2.resize(ti[2], (32, 32)) for ti in data_impressions])
-    #
-    # # print(type(data_impressions))
-    # # print(data_impressions.shape)
-    # # exit()
-    #
-    # # data_impressions = np.expand_dims(np.array([cv2.resize(ti[2], (32, 32)) for ti in data_impressions]), -1)
-    # # data_impressions = np.expand_dims(np.array(data_impressions), -1)
-    # # print(type(data_impressions))
-    # # print(data_impressions.shape)
-    # # exit()
-    # data_impressions = [di.transpose([2, 0, 1]) for di in data_impressions]
-    # data_impressions  = np.asarray(data_impressions)
-    #
-    # print(type(data_impressions))
-    # data_impressions = torch.from_numpy(data_impressions)
-    # #
-    # # print(type(data_impressions))
-    # # print(data_impressions.shape)
-    # exit()
-    #
-    #
-    # # print(type(data_impressions))
-    # # print(data_impressions.shape)
-    #
-    # # print("")
-    # # print("Data Impression ... ")
-    # status = model.net.training
-    # model.net.eval()
-    #
-    # data_impressions_logits = model(data_impressions)
-    #
-    # model.net.train(status)
-    # return data_impressions, data_impressions_logits
 
+def simple_MRP(model: ContinualModel, finished_calss):
 
-
-def data_imp(model: ContinualModel, finished_calss):
-    print("")
-    print("Data Impression ... ")
-    home_path = "/Users/mozhgan/Documents/PycharmProjects/CL_DER"
-    try:
-        os.mkdir(home_path + "/data/data_impressions_by_me_lenet5/" + str(finished_calss))
-    except:
-        pass
     status = model.net.training
     model.net.eval()
     # optimizer = torch.optim.SGD(params=[input], lr=0.01)
-
     for di in range(5):
         input = torch.nn.parameter.Parameter(torch.empty(1, 1, 28, 28).uniform_(0, 1))
         optimizer = torch.optim.Adam(params=[input], lr=0.01)
@@ -205,22 +114,17 @@ def data_imp(model: ContinualModel, finished_calss):
                 b = a - np.min(a)
                 b = 255 * b / np.max(b)
                 temp_img = b.astype(np.uint8)
-                pil_img = Image.fromarray(temp_img)  # .resize(size=(64, 64))
-                pil_img.save(home_path+"/data/data_impressions_by_me_lenet5/" + str(
-                    finished_calss) + "/" + str(di) + "_" + str(step) + ".jpg")
-        # print(type(input))
+
         input.requires_grad = False
         if di == 0:
-            data_impressions = input
+            recovered_samples = input
         else:
-            data_impressions = torch.cat((data_impressions, input), 0)
+            recovered_samples = torch.cat((recovered_samples, input), 0)
 
-
-    print(data_impressions.shape)
-    data_impressions_logits = model(data_impressions)
+    recovered_samples_logits = model(recovered_samples)
 
     model.net.train(status)
-    return data_impressions, data_impressions_logits
+    return recovered_samples, recovered_samples_logits
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
@@ -285,12 +189,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     model.net.to(model.device)
     results, results_mask_classes = [], []
 
-    finished_calss = [2,3]
 
-    # data_impressions, data_impressions_logits = data_impression_Lenet5(model, finished_calss)
-
-
-    data_impressions, data_impressions_logits = data_impression_CIFAR10(model, finished_calss)
+    # recovered_samples, recovered_samples_logits = recovered_sample_Lenet5(model, finished_calss)
+    # recovered_samples, recovered_samples_logits = recovered_sample_CIFAR10(model, finished_calss)
 
     model_stash = create_stash(model, args, dataset)
 
@@ -347,17 +248,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
 
         finished_calss = np.unique(labels.numpy())
-        # print()
-        # print(finished_calss)
-        # data_impressions, data_impressions_logits  = data_imp(model, finished_calss)
-        # model.update_buffer(data_impressions, data_impressions_logits)
-        data_impressions, data_impressions_logits = data_impression_CIFAR10(model,finished_calss)
-        #
-        # print(data_impressions.shape)
-        # print(data_impressions_logits.shape)
-        model.update_buffer_cifar10(data_impressions, data_impressions_logits)
+        # finished_calss = [2, 3]
 
 
+        # recovered_samples, recovered_samples_logits  = simple_MRP(model, finished_calss)
+        # model.update_buffer(recovered_samples, recovered_samples_logits)
+        recovered_samples, recovered_samples_logits = recovered_sample_CIFAR10(model,finished_calss)
+
+        model.update_buffer_cifar10(recovered_samples, recovered_samples_logits)
 
         if hasattr(model, 'end_task'):
             model.end_task(dataset)

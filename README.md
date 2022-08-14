@@ -24,7 +24,7 @@ or not (Class-IL).
 
 ![Book logo](./figure/proposed_method.png)
 
-## Memory Recovery Paradimg (MRP)
+## Memory Recovery Paradigm (MRP)
 
 To better understanding the MRP, we provide This [Notebook](MRP.ipynb) 
 to visualize the process of recovering data from an arbitrary learner network. For the simplisity, we use one-hot vector instead of modeling the network output space using Dirichlet distribution. You can set `target_class` to an arbitrary class id to see the recovered sample.
